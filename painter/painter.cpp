@@ -34,6 +34,8 @@ IMAGE img;
 IMAGE tmp;
 // 形状绘制时实时预览用
 IMAGE drawing;
+// RGB调色条
+IMAGE rSimg, gSimg, bSimg;
 
 // RGB调色条定义
 Slider rSlider, gSlider, bSlider;
@@ -92,6 +94,10 @@ int main()
     initSlider(&rSlider, 25, HEIGHT + 20, 200, 10, 0, 255, 0);
     initSlider(&gSlider, 250, HEIGHT + 20, 200, 10, 0, 255, 0);
     initSlider(&bSlider, 475, HEIGHT + 20, 200, 10, 0, 255, 0);
+
+    loadimage(&rSimg, "./slider/r.png");
+    loadimage(&gSimg, "./slider/g.png");
+    loadimage(&bSimg, "./slider/b.png");
 
     clearCanvas();
     drawColorPicker();
@@ -178,6 +184,22 @@ int main()
                 else if (msg.x > 750 && msg.x < WIDTH && msg.y > HEIGHT && msg.y < 650 && msg.uMsg == WM_LBUTTONDOWN) // 这里不能用msg.mkLButton
                 {
                     reColorPicker(colorPicker, 8, RGB(rSlider.value, gSlider.value, bSlider.value));
+
+                    IMAGE click_button_palette_add;
+
+                    loadimage(&click_button_palette_add, "./button/click_button_palette_add.png");
+                    putimage(750, HEIGHT + 1, &click_button_palette_add);
+
+                    // 更新完立刻对缓存进行刷新，避免新图像不显示
+                    FlushBatchDraw();
+
+                    while (GetMouseMsg().mkLButton)
+                    {
+                    }
+
+                    loadimage(&button_clear, "./button/button_palette_add.png");
+                    putimage(750, HEIGHT + 1, &button_palette_add);
+
                     drawColorPicker();
                 }
                 else if (msg.x > 300 && msg.x < 350 && msg.y > HEIGHT + 51 && msg.y < 700 && msg.uMsg == WM_LBUTTONDOWN)
@@ -298,20 +320,6 @@ void reColorPicker(int *colorPicker, int size, int rgb_16)
 // 画选色栏
 void drawColorPicker()
 {
-    IMAGE click_button_palette_add;
-
-    loadimage(&click_button_palette_add, "./button/click_button_palette_add.png");
-    putimage(750, HEIGHT + 1, &click_button_palette_add);
-
-    // 更新完立刻对缓存进行刷新，避免新图像不显示
-    FlushBatchDraw();
-
-    while (GetMouseMsg().mkLButton)
-    {
-    }
-
-    loadimage(&button_clear, "./button/button_palette_add.png");
-    putimage(750, HEIGHT + 1, &button_palette_add);
 
     for (int i = 0; i < 8; i++)
     {
@@ -321,7 +329,7 @@ void drawColorPicker()
 
     setfillcolor(LIGHTGRAY);
     solidrectangle(WIDTH, 400, WIDTH + 50, 600);
-    setfillcolor(DARKGRAY);
+    setfillcolor(currentColor);
     solidrectangle(WIDTH + 5, 405, WIDTH + 45, 595);
     setfillcolor(LIGHTGRAY);
     solidrectangle(WIDTH + 10, 410, WIDTH + 40, 590);
@@ -395,8 +403,20 @@ void initSlider(Slider *slider, int x, int y, int width, int height, int min, in
 void drawSlider(Slider *slider)
 {
     // 滑动条背景
-    setfillcolor(LIGHTGRAY);
-    bar(slider->x, slider->y, slider->x + slider->width, slider->y + slider->height);
+    // setfillcolor(LIGHTGRAY);
+    // bar(slider->x, slider->y, slider->x + slider->width, slider->y + slider->height);
+    if (slider->x == 25)
+    {
+        putimage(25, HEIGHT + 20, &rSimg);
+    }
+    else if (slider->x == 250)
+    {
+        putimage(250, HEIGHT + 20, &gSimg);
+    }
+    else
+    {
+        putimage(475, HEIGHT + 20, &bSimg);
+    }
 
     // 滑动块
     int slider_pos = slider->x + (slider->value - slider->min) * slider->width / (slider->max - slider->min);
@@ -437,6 +457,7 @@ void handleMouseClick(int x, int y)
         if (colorIndex >= 0 && colorIndex < 8)
         {
             currentColor = colorPicker[colorIndex];
+            drawColorPicker();
             eraserMode = false;
         }
     }
